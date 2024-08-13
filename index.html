@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f9f9f9;
+        }
+        .container {
+            text-align: center;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #ff0000;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #ff0000;
+            outline: none;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #ff0000;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #cc0000;
+        }
+        .spinner {
+            display: none;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #ff0000;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .feedback {
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .success {
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Video Downloader</h1>
+        <input type="text" id="videoUrl" placeholder="Enter YouTube video URL" aria-label="YouTube Video URL">
+        <button onclick="downloadVideo()">Download Video</button>
+        <div class="spinner" id="spinner"></div>
+        <div id="feedback" class="feedback"></div>
+    </div>
+    <script>
+        async function downloadVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            const feedbackElement = document.getElementById('feedback');
+            const spinner = document.getElementById('spinner');
+
+            // Clear previous feedback
+            feedbackElement.textContent = '';
+            feedbackElement.className = 'feedback';
+            
+            if (!url || !isValidYouTubeUrl(url)) {
+                feedbackElement.textContent = 'Please enter a valid YouTube URL.';
+                feedbackElement.className = 'feedback error';
+                return;
+            }
+
+            spinner.style.display = 'block';
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                spinner.style.display = 'none';
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'video.mp4';
+                    link.click();
+                    feedbackElement.textContent = 'Download started!';
+                    feedbackElement.className = 'feedback success';
+                } else {
+                    feedbackElement.textContent = 'Failed to download video.';
+                    feedbackElement.className = 'feedback error';
+                }
+            } catch (error) {
+                spinner.style.display = 'none';
+                feedbackElement.textContent = 'Error: ' + error.message;
+                feedbackElement.className = 'feedback error';
+            }
+        }
+
+        function isValidYouTubeUrl(url) {
+            const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[^\s]+$/;
+            return regex.test(url);
+        }
+    </script>
+</body>
+</html>
